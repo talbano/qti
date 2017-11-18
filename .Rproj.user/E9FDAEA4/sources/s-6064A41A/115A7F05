@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1510976046091.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "115A7F05",
+    "lastKnownWriteTime" : 1510976652,
+    "last_content_update" : 1510976652510,
+    "path" : "~/Documents/code/qti/R/read_qti.R",
+    "project_path" : "R/read_qti.R",
+    "properties" : {
+        "cursorPosition" : "65,0",
+        "scrollLine" : "41"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
