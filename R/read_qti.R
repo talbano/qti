@@ -1,7 +1,7 @@
 #' Read Assessment Items in QTI XML
 #'
-#' These functions read QTI XML from strings or files. Only the single and
-#' multiple choice item types are currently supported.
+#' These functions read QTI XML from character strings or files.
+#' Only the single and multiple choice item types are currently supported.
 #'
 #' @param x String or connection to QTI XML file.
 #' @param \dots further arguments passed to or from other functions.
@@ -16,7 +16,6 @@
 #' \item{key}{vector of correct/incorrect as 0/1 for options}
 #' \item{xml}{raw XML contents, stored as an object of class
 #' \dQuote{xml_document}}
-#' @author Tony Albano \email{tony.d.albano@@gmail.com}
 #'
 #' @keywords methods
 #' @examples
@@ -52,64 +51,36 @@
 read_qti <- function(x, ...) {
   xml <- xml2::read_xml(x, ...)
   xml2::xml_ns_strip(xml)
-  qti_clean_nodes(xml)
   out <- qti_item(id = qti_item_id(xml),
     title = qti_item_title(xml),
     type = qti_item_type(xml),
-    prompt = qti_clean_text(qti_prompt_text(xml)),
-    options = qti_clean_text(qti_choice_text(xml)),
+    prompt = qti_prompt_text(xml),
+    options = qti_choice_text(xml),
     key = qti_key(xml),
     xml = xml2::read_xml(x, ...))
   return(out)
 }
 
-qti_item <- function(id = NULL, title = NULL, type = NULL, prompt = NULL,
-  options = NULL, key = NULL, xml = NULL) {
-  structure(list(id = id, title = title, type = type, prompt = prompt,
-    options = options, key = key, xml = xml), class = "qti_item")
-}
-
-#' @export
-print.qti_item <- function(x, ...) {
-  cat("\nqti_item\n")
-  cat(x$title, "\n")
-  cat(x$id, "\n\n")
-  cat(x$prompt, "\n\n")
-  cat(paste(x$options, collapse = "\n\n"), "\n\n")
-}
-
-qti_clean_nodes <- function(x, xpaths = c("//image", "//img",
-  "//math", "//pre", "//table"), xtext = gsub("(//)(.+)", " [\\2] ", xpaths)) {
-  # Replace any text contents of image, img, math, pre, and table with
-  # placeholders
-  # Remove all children, which also removes closing tag
-  # Remove all attributes
-  # Set text to be placeholder in xtext, which adds closing tag
-  # Modifying by reference
-  for (i in seq_along(xpaths)) {
-    temp_nodes <- xml2::xml_find_all(x, xpaths[i])
-    if (length(temp_nodes)) {
-      xml2::xml_remove(xml2::xml_children(temp_nodes))
-      xml2::xml_attrs(temp_nodes) <- NULL
-      xml2::xml_text(temp_nodes) <- xtext[i]
-    }
-    rm(temp_nodes) # Does gc do this for us?
-  }
-}
-
-qti_prompt_text <- function(x, xpath = "//itemBody",
-  rmpath = "//choiceInteraction") {
+qti_prompt_text <- function(x) {
   # Extract prompt text, removing choice interactions
   # Copy the itemBody node (or full object for now), remove
   # choiceInteraction and children, pull remaining text
   y <- xml2::read_xml(as.character(x)) # What's the best way to copy?
-  xml2::xml_remove(xml2::xml_find_all(y, rmpath), free = TRUE)
-  xml2::xml_text(xml2::xml_find_all(y, xpath))
+  xml2::xml_remove(xml2::xml_find_all(y, "//choiceInteraction"), free = TRUE)
+  as.character(xml2::xml_contents(xml2::xml_find_all(y, "//itemBody")))
 }
 
 qti_choice_text <- function(x) {
   # Extract all choice text
-  xml2::xml_text(xml2::xml_find_all(x, "//simpleChoice"))
+  # This is breaking all html into separate elements, like new options
+  # Need to loop through elements of choiceInteraction and collapse
+  # contents of all children
+  temp_choices <- xml2::xml_find_all(x, "//simpleChoice")
+  out <- character(length = length(temp_choices))
+  for (i in seq_along(out)) {
+    out[i] <- paste(xml2::xml_contents(temp_choices[[i]]), collapse = "")
+  }
+  return(out)
 }
 
 qti_key <- function(x, xpath = "//correctResponse") {
@@ -136,14 +107,4 @@ qti_item_type <- function(x) {
     return("choice")
   else
     return(NULL)
-}
-
-qti_clean_text <- function(x) {
-  # Remove newlines, leading option letters, and leading and trailing space
-  rm <- "^\\s*\\w{1}\\.{1}"
-  out <- sapply(x, function(y) gsub(rm, "", y))
-  out <- sapply(out, function(y) gsub("\\s+", " ", y))
-  out <- sapply(out, function(y) gsub("^[[:space:]]+|[[:space:]]+$", "", y))
-  names(out) <- NULL
-  return(out)
 }

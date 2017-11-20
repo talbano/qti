@@ -28,8 +28,8 @@ if present in x:
 \dQuote{xml_document}}
 }
 \description{
-These functions read QTI XML from strings or files. Only the single and
-multiple choice item types are currently supported.
+These functions read QTI XML from character strings or files.
+Only the single and multiple choice item types are currently supported.
 }
 \section{Methods (by generic)}{
 \itemize{
@@ -65,8 +65,5 @@ item <- read_qti(
   </assessmentItem>")
 item
 
-}
-\author{
-Tony Albano \email{tony.d.albano@gmail.com}
 }
 \keyword{methods}

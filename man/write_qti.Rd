@@ -4,15 +4,18 @@
 \alias{write_qti}
 \title{Write Assessment Items in QTI XML}
 \usage{
-write_qti(x, file)
+write_qti(x, file, ...)
 }
 \arguments{
-\item{x}{Object of class \dQuote{\code{qti_item}} or
-\dQuote{\code{xml_document}} to be written.}
+\item{x}{Object of class \dQuote{\code{qti_item}} to be written.}
 
 \item{file}{Path to file or connection to write to.}
 
 \item{\dots}{Further arguments passed to \code{xml_write}.}
+}
+\value{
+When \code{file} is not provided, x is written to the console
+with \code{as.character}.
 }
 \description{
 These functions write QTI XML to files. Only the single and

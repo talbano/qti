@@ -1,9 +1,52 @@
-# qti_item class
-
-qti_item <- function(id = NULL, title = NULL, type = NULL, prompt = NULL,
-  options = NULL, key = NULL, xml = NULL) {
-  structure(list(id = id, title = title, type = type, prompt = prompt,
-    options = options, key = key, xml = xml), class = "qti_item")
+#' The qti_item class
+#'
+#' These functions build and manipulate qti_item objects, for analysis and
+#' for reading and writing to QTI XML.
+#'
+#' @param id Item ID as an integer or string.
+#' @param title Item title, as a string, with max 140 characters.
+#' @param type Item type, only "choice" is currently supported.
+#' @param prompt Stem text, as a single string.
+#' @param options Option text, as vector of strings, one per option.
+#' @param key Numeric vector of 0/1 response scores, one per option.
+#' @param xml Optional XML representation of item, as character. If not
+#' supplied, this is created automatically from the remaining arguments.
+#' @return \code{qti_item} returns an object of class
+#' \dQuote{\code{qti_item}}, which is a list containing named elements for
+#' the item \code{id}, \code{title}, and \code{type}, as supplied via
+#' arguments, the \code{prompt} and \code{options} text with formatting and
+#' resources stripped, and the QTI XML representation of the item.
+#'
+#' @keywords methods
+#' @examples
+#'
+#' item <- qti_item(
+#'   id = 1584,
+#'   title = "Excellent Example Item",
+#'   type = "choice",
+#'   prompt = "Is this a really good question?",
+#'   options = c("Yes", "No", "Maybe"),
+#'   key = c(0, 0, 1)
+#' )
+#' item
+#'
+#' @export
+qti_item <- function(id = NULL, title = NULL, type = c("choice"),
+  prompt = NULL, options = NULL, key = NULL, xml = NULL) {
+  out <- list(id = id,
+    title = substr(title, 1, 140),
+    type = match.arg(type),
+    prompt = prompt,
+    options = options,
+    key = key)
+  if (is.null(xml))
+    out$xml <- qti_build_xml(out)
+  else
+    out$xml <- xml
+  out$prompt <- prep_item_text(paste(prompt, collapse = ""))
+  out$options <- prep_item_text(options)
+  class(out) <- "qti_item"
+  return(out)
 }
 
 #' @describeIn read_qti Print method
@@ -16,82 +59,46 @@ print.qti_item <- function(x, ...) {
   cat(paste(x$options, collapse = "\n\n"), "\n\n")
 }
 
-qti_clean_nodes <- function(x, xpaths = c("//image", "//img",
-  "//math", "//pre", "//table"), xtext = gsub("(//)(.+)", " [\\2] ", xpaths)) {
-  # Replace any text contents of image, img, math, pre, and table with
-  # placeholders
-  # Remove all children, which also removes closing tag
-  # Remove all attributes
-  # Set text to be placeholder in xtext, which adds closing tag
-  # Modifying by reference
-  for (i in seq_along(xpaths)) {
-    temp_nodes <- xml2::xml_find_all(x, xpaths[i])
-    if (length(temp_nodes)) {
-      xml2::xml_remove(xml2::xml_children(temp_nodes))
-      xml2::xml_attrs(temp_nodes) <- NULL
-      xml2::xml_text(temp_nodes) <- xtext[i]
-    }
-    rm(temp_nodes) # Does gc do this for us?
-  }
-}
-
-qti_prompt_text <- function(x, xpath = "//itemBody",
-  rmpath = "//choiceInteraction") {
-  # Extract prompt text, removing choice interactions
-  # Copy the itemBody node (or full object for now), remove
-  # choiceInteraction and children, pull remaining text
-  y <- xml2::read_xml(as.character(x)) # What's the best way to copy?
-  xml2::xml_remove(xml2::xml_find_all(y, rmpath), free = TRUE)
-  xml2::xml_text(xml2::xml_find_all(y, xpath))
-}
-
-qti_choice_text <- function(x) {
-  # Extract all choice text
-  xml2::xml_text(xml2::xml_find_all(x, "//simpleChoice"))
-}
-
-qti_key <- function(x, xpath = "//correctResponse") {
-  # Returns vector of 0/1 for keyed choices listed as values
-  # under the correctResponse node
-  key_id <- xml2::xml_text(xml2::xml_find_all(x, "//correctResponse//value"))
-  choice_id <- unlist(lapply(xml2::xml_attrs(xml2::xml_find_all(x,
-    "//simpleChoice")), "[[", "identifier"))
-  return(ifelse(choice_id %in% key_id, 1, 0))
-}
-
-qti_item_id <- function(x) {
-  xml2::xml_attr(xml2::xml_find_first(x, "//assessmentItem"), "identifier")
-}
-
-qti_item_title <- function(x) {
-  xml2::xml_attr(xml2::xml_find_first(x, "//assessmentItem"), "title")
-}
-
-qti_item_type <- function(x) {
-  item_type <- xml2::xml_attr(xml2::xml_find_first(x, "//outcomeDeclaration"),
-    "cardinality")
-  if (item_type %in% c("single", "multiple"))
-    return("choice")
-  else
-    return(NULL)
-}
-
-qti_clean_text <- function(x) {
+clean_text <- function(x) {
   # Remove newlines, leading option letters, and leading and trailing space
-  rm <- "^\\s*\\w{1}\\.{1}"
-  out <- sapply(x, function(y) gsub(rm, "", y))
+  # Subs image, img, math, pre, and table tags with placeholders
+  # Strip names
+  out <- sapply(x, function(y) gsub("^\\s*\\w{1}\\.{1}", "", y))
   out <- sapply(out, function(y) gsub("\\s+", " ", y))
   out <- sapply(out, function(y) gsub("^[[:space:]]+|[[:space:]]+$", "", y))
   names(out) <- NULL
   return(out)
 }
 
-qti_build <- function(x, template) {
+prep_item_text <- function(x, xpaths = c("//image", "//img",
+  "//math", "//pre", "//table"), xtext = gsub("(//)(.+)", " [\\2] ", xpaths)) {
+  # Replace any text contents of image, img, math, pre, and table with
+  # placeholders
+  # Remove all children, which also removes closing tag
+  # Remove all attributes
+  # Set text to be placeholder in xtext, which adds closing tag
+  # All HTML is about to be stripped. Replace </br> with space to separate
+  # sentences
+  out <- character(length = length(x))
+  for (i in seq_along(out)) {
+    x[i] <- gsub("(<br/>)+", " ", x[i])
+    temp_item <- xml2::read_html(sprintf("<p>%s</p>", x[i]))
+    for (j in seq_along(xpaths)) {
+      temp_nodes <- xml2::xml_find_all(temp_item, xpaths[j])
+      xml2::xml_remove(xml2::xml_children(temp_nodes))
+      xml2::xml_attrs(temp_nodes) <- NULL
+      xml2::xml_text(temp_nodes) <- xtext[j]
+    }
+    out[i] <- clean_text(xml2::xml_text(temp_item))
+  }
+  return(out)
+}
+
+qti_build_xml <- function(x, template) {
   if (x$type == "choice") {
     if (missing(template))
       template <- system.file("templates", "choice.xml", package = "qti")
-    #choice_template <- xml2::read_xml(template)
-    choice_template <- xml2::read_xml("/users/talbano/documents/code/qti/inst/templates/choice.xml")
+    choice_template <- xml2::read_xml(template)
     n_ops <- length(unlist(x$options))
     choice_labels <- paste0("Choice", LETTERS[1:n_ops])
     xml2::xml_attr(choice_template, "identifier") <- x$id
