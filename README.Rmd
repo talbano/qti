@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 
 The qti package provides functions for reading and writing QTI XML files in R, so as to support the analysis of assessment item content. These functions implement XML parsing from the xml2 package.
 
-QTI, question and test interoperability, is a complex XML standard for storing and sharing assessment information and results. The qti package aims to cover the simpler QTI item interactions, currently single and multiple choice, along with assessment manifest files. QTI can files can also be built from scratch, as shown below.
+QTI, question and test interoperability, is a complex XML standard for storing and sharing assessment information and results. The qti package aims to cover the simpler QTI item interactions, currently single and multiple choice, along with assessment manifest files. QTI files can also be built from scratch, as shown below.
 
 ## Installation
 

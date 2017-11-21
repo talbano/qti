@@ -20,6 +20,7 @@
 #' @keywords methods
 #' @examples
 #'
+#' # Read from character string
 #' item <- read_qti(
 #'   "<assessmentItem identifier='1584'
 #'     title='Excellent Example Item'>
@@ -46,6 +47,8 @@
 #'     </itemBody>
 #'   </assessmentItem>")
 #' item
+#'
+#' # Read from file
 #'
 #' @export
 read_qti <- function(x, ...) {

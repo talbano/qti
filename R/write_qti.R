@@ -16,7 +16,7 @@ write_qti <- function(x, file, ...) {
     out <- x
   else if (class(x) == "qti_item") {
     if (is.null(x$xml))
-      out <- qti_build_xml(x)
+      out <- qti_item_xml(x)
     else
       out <- x$xml
   }

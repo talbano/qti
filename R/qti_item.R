@@ -21,12 +21,13 @@
 #' @examples
 #'
 #' item <- qti_item(
-#'   id = 1584,
-#'   title = "Excellent Example Item",
+#'   id = 999,
+#'   title = "Example Item",
 #'   type = "choice",
-#'   prompt = "Is this a really good question?",
-#'   options = c("Yes", "No", "Maybe"),
-#'   key = c(0, 0, 1)
+#'   prompt = "What does this image tell you? <img src='life.png' />",
+#'   options = c("Everything", "Something",
+#'     "Nothing, but look at this code:<br/><pre>lm(life ~ R)</pre>"),
+#'   key = c(1, 1, 0)
 #' )
 #' item
 #'
@@ -40,7 +41,7 @@ qti_item <- function(id = NULL, title = NULL, type = c("choice"),
     options = options,
     key = key)
   if (is.null(xml))
-    out$xml <- qti_build_xml(out)
+    out$xml <- qti_item_xml(out)
   else
     out$xml <- xml
   out$prompt <- prep_item_text(paste(prompt, collapse = ""))
@@ -49,7 +50,7 @@ qti_item <- function(id = NULL, title = NULL, type = c("choice"),
   return(out)
 }
 
-#' @describeIn read_qti Print method
+#' @describeIn qti_item Print method
 #' @export
 print.qti_item <- function(x, ...) {
   cat("\nqti_item\n")
@@ -94,7 +95,7 @@ prep_item_text <- function(x, xpaths = c("//image", "//img",
   return(out)
 }
 
-qti_build_xml <- function(x, template) {
+qti_item_xml <- function(x, template) {
   if (x$type == "choice") {
     if (missing(template))
       template <- system.file("templates", "choice.xml", package = "qti")
