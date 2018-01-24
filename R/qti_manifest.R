@@ -3,7 +3,8 @@
 #' These functions build and manipulate qti_manifest objects, for analysis
 #' and for reading and writing to QTI XML.
 #'
-#' @param x one or more items as \dQuote{\code{qti_item}} objects.
+#' @param x One or more items as \dQuote{\code{qti_item}} objects.
+#' @param id Optional identifier.
 #' @param title Assessment title, as a string, with max 140 characters.
 #' @param xml Optional XML representation of manifest, as character. If not
 #' supplied, this is created automatically from the remaining arguments.
@@ -42,29 +43,18 @@ qti_manifest <- function(x, id = NULL, title = NULL, xml = NULL) {
   return(out)
 }
 
-#' @describeIn qti_manifest Print method
 #' @export
 print.qti_manifest <- function(x, ...) {
   cat("\nqti_manifest\n")
   cat("Title:", x$title, "\n")
   cat("ID:", x$id, "\n\n")
-  cat("Item count:", count_items(x), "\n\n")
-  cat("Image count:", count_images(x), "\n\n")
-}
-
-count_images <- function(x) {
-  # Checks to see if the qti_item references images
-  length(xml2::xml_find_all(x$xml, "//img"))
-}
-
-count_items <- function(x) {
-  # Count items, assuming each is stored as a resource
-  length(xml2::xml_find_all(x$xml, "//resource"))
 }
 
 img_src <- function(x) {
   xml2::xml_attr(xml2::xml_find_all(x$xml, "//img"), "src")
 }
+
+#qti_item_filename <- function(x)
 
 resource_node <- function(x, identifier = x$id,
   type = "imsqti_item_xmlv2p2", href = sprintf("qti-item-%s.xml", x$id)) {

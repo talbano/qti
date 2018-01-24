@@ -9,6 +9,8 @@
 #' @param prompt Stem text, as a single string.
 #' @param options Option text, as vector of strings, one per option.
 #' @param key Numeric vector of 0/1 response scores, one per option.
+#' @param rm_prefix Logical with default \code{TRUE} for removing prefixes,
+#' e.g., \code{a.}, \code{b.}, \code{c.} from prompt and options.
 #' @param xml Optional XML representation of item, as character. If not
 #' supplied, this is created automatically from the remaining arguments.
 #' @return \code{qti_item} returns an object of class
@@ -33,7 +35,8 @@
 #'
 #' @export
 qti_item <- function(id = NULL, title = NULL, type = c("choice"),
-  prompt = NULL, options = NULL, key = NULL, xml = NULL) {
+  prompt = NULL, options = NULL, key = NULL, rm_prefix = TRUE,
+  xml = NULL) {
   out <- list(id = id,
     title = substr(title, 1, 140),
     type = match.arg(type),
@@ -44,13 +47,13 @@ qti_item <- function(id = NULL, title = NULL, type = c("choice"),
     out$xml <- qti_item_xml(out)
   else
     out$xml <- xml
-  out$prompt <- prep_item_text(paste(prompt, collapse = ""))
-  out$options <- prep_item_text(options)
+  out$prompt <- prep_item_text(paste(prompt, collapse = ""),
+    rm_prefix = rm_prefix)
+  out$options <- prep_item_text(options, rm_prefix = rm_prefix)
   class(out) <- "qti_item"
   return(out)
 }
 
-#' @describeIn qti_item Print method
 #' @export
 print.qti_item <- function(x, ...) {
   cat("\nqti_item\n")
@@ -60,11 +63,13 @@ print.qti_item <- function(x, ...) {
   cat(paste(x$options, collapse = "\n\n"), "\n\n")
 }
 
-clean_text <- function(x) {
+clean_text <- function(x, rm_prefix = TRUE) {
   # Remove newlines, leading option letters, and leading and trailing space
   # Subs image, img, math, pre, and table tags with placeholders
   # Strip names
-  out <- sapply(x, function(y) gsub("^\\s*\\w{1}\\.{1}", "", y))
+  out <- x
+  if (rm_prefix)
+    out <- sapply(out, function(y) gsub("^\\s*\\w{1}\\.{1}", "", y))
   out <- sapply(out, function(y) gsub("\\s+", " ", y))
   out <- sapply(out, function(y) gsub("^[[:space:]]+|[[:space:]]+$", "", y))
   names(out) <- NULL
@@ -72,7 +77,8 @@ clean_text <- function(x) {
 }
 
 prep_item_text <- function(x, xpaths = c("//image", "//img",
-  "//math", "//pre", "//table"), xtext = gsub("(//)(.+)", " [\\2] ", xpaths)) {
+  "//math", "//pre", "//table"), xtext = gsub("(//)(.+)", " [\\2] ", xpaths),
+  rm_prefix) {
   # Replace any text contents of image, img, math, pre, and table with
   # placeholders
   # Remove all children, which also removes closing tag
@@ -90,7 +96,7 @@ prep_item_text <- function(x, xpaths = c("//image", "//img",
       xml2::xml_attrs(temp_nodes) <- NULL
       xml2::xml_text(temp_nodes) <- xtext[j]
     }
-    out[i] <- clean_text(xml2::xml_text(temp_item))
+    out[i] <- clean_text(xml2::xml_text(temp_item), rm_prefix = rm_prefix)
   }
   return(out)
 }

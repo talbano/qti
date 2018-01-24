@@ -5,7 +5,7 @@
 \title{The qti_item class}
 \usage{
 qti_item(id = NULL, title = NULL, type = c("choice"), prompt = NULL,
-  options = NULL, key = NULL, xml = NULL)
+  options = NULL, key = NULL, rm_prefix = TRUE, xml = NULL)
 }
 \arguments{
 \item{id}{Item ID as an integer or string.}
@@ -19,6 +19,9 @@ qti_item(id = NULL, title = NULL, type = c("choice"), prompt = NULL,
 \item{options}{Option text, as vector of strings, one per option.}
 
 \item{key}{Numeric vector of 0/1 response scores, one per option.}
+
+\item{rm_prefix}{Logical with default \code{TRUE} for removing prefixes,
+e.g., \code{a.}, \code{b.}, \code{c.} from prompt and options.}
 
 \item{xml}{Optional XML representation of item, as character. If not
 supplied, this is created automatically from the remaining arguments.}
@@ -37,12 +40,13 @@ for reading and writing to QTI XML.
 \examples{
 
 item <- qti_item(
-  id = 1584,
-  title = "Excellent Example Item",
+  id = 999,
+  title = "Example Item",
   type = "choice",
-  prompt = "Is this a really good question?",
-  options = c("Yes", "No", "Maybe"),
-  key = c(0, 0, 1)
+  prompt = "What does this image tell you? <img src='life.png' />",
+  options = c("Everything", "Something",
+    "Nothing, but look at this code:<br/><pre>lm(life ~ R)</pre>"),
+  key = c(1, 1, 0)
 )
 item
 

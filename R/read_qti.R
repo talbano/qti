@@ -45,10 +45,9 @@
 #'         <simpleChoice identifier='ChoiceC'>Maybe</simpleChoice>
 #'       </choiceInteraction>
 #'     </itemBody>
-#'   </assessmentItem>")
+#'   </assessmentItem>"
+#' )
 #' item
-#'
-#' # Read from file
 #'
 #' @export
 read_qti <- function(x, ...) {
