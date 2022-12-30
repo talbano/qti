@@ -4,13 +4,15 @@
 #' for reading and writing to QTI XML.
 #'
 #' @param id Item ID as an integer or string.
-#' @param title Item title, as a string, with max 140 characters.
+#' @param title Item title, as a string, with max 280 characters.
 #' @param type Item type, only "choice" is currently supported.
 #' @param prompt Stem text, as a single string.
 #' @param options Option text, as vector of strings, one per option.
 #' @param key Numeric vector of 0/1 response scores, one per option.
 #' @param rm_prefix Logical with default \code{TRUE} for removing prefixes,
 #' e.g., \code{a.}, \code{b.}, \code{c.} from prompt and options.
+#' @param href Optional file name for item, with default created using
+#' \code{id}.
 #' @param xml Optional XML representation of item, as character. If not
 #' supplied, this is created automatically from the remaining arguments.
 #' @return \code{qti_item} returns an object of class
@@ -36,13 +38,14 @@
 #' @export
 qti_item <- function(id = NULL, title = NULL, type = c("choice"),
   prompt = NULL, options = NULL, key = NULL, rm_prefix = TRUE,
-  xml = NULL) {
+  href = sprintf("qti-item-%s.xml", id), xml = NULL) {
   out <- list(id = id,
-    title = substr(title, 1, 140),
+    title = substr(title, 1, 280),
     type = match.arg(type),
     prompt = prompt,
     options = options,
-    key = key)
+    key = key,
+    href = href)
   if (is.null(xml))
     out$xml <- qti_item_xml(out)
   else
@@ -50,17 +53,24 @@ qti_item <- function(id = NULL, title = NULL, type = c("choice"),
   out$prompt <- prep_item_text(paste(prompt, collapse = ""),
     rm_prefix = rm_prefix)
   out$options <- prep_item_text(options, rm_prefix = rm_prefix)
+  out$n_images <- count_images(out$prompt) + count_images(out$options)
   class(out) <- "qti_item"
   return(out)
 }
 
 #' @export
-print.qti_item <- function(x, ...) {
+print.qti_item <- function(x, preface = LETTERS, note_correct = "*", ...) {
   cat("\nqti_item\n")
   cat(x$title, "\n")
   cat(x$id, "\n\n")
   cat(x$prompt, "\n\n")
-  cat(paste(x$options, collapse = "\n\n"), "\n\n")
+  ops <- x$options
+  if (!is.null(preface))
+    ops <- paste(preface[1:length(ops)], ops, sep = ". ")
+  if (!is.null(note_correct))
+    ops[as.logical(x$key)] <-
+      paste0(note_correct, ops[as.logical(x$key)], note_correct)
+  cat(paste(ops, collapse = "\n\n"), "\n\n")
 }
 
 clean_text <- function(x, rm_prefix = TRUE) {
@@ -139,4 +149,8 @@ qti_item_xml <- function(x, template) {
   }
   else
     return(NULL)
+}
+
+count_images <- function(x, pattern = "\\[image\\]|\\[img\\]") {
+  sum(unlist(gregexpr(pattern, x)) > 0)
 }

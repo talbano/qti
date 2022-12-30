@@ -4,13 +4,22 @@
 \alias{qti_item}
 \title{The qti_item class}
 \usage{
-qti_item(id = NULL, title = NULL, type = c("choice"), prompt = NULL,
-  options = NULL, key = NULL, rm_prefix = TRUE, xml = NULL)
+qti_item(
+  id = NULL,
+  title = NULL,
+  type = c("choice"),
+  prompt = NULL,
+  options = NULL,
+  key = NULL,
+  rm_prefix = TRUE,
+  href = sprintf("qti-item-\%s.xml", id),
+  xml = NULL
+)
 }
 \arguments{
 \item{id}{Item ID as an integer or string.}
 
-\item{title}{Item title, as a string, with max 140 characters.}
+\item{title}{Item title, as a string, with max 280 characters.}
 
 \item{type}{Item type, only "choice" is currently supported.}
 
@@ -22,6 +31,9 @@ qti_item(id = NULL, title = NULL, type = c("choice"), prompt = NULL,
 
 \item{rm_prefix}{Logical with default \code{TRUE} for removing prefixes,
 e.g., \code{a.}, \code{b.}, \code{c.} from prompt and options.}
+
+\item{href}{Optional file name for item, with default created using
+\code{id}.}
 
 \item{xml}{Optional XML representation of item, as character. If not
 supplied, this is created automatically from the remaining arguments.}

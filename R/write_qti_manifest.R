@@ -3,16 +3,18 @@
 #' These functions write QTI XML manifests to files, and build assessment
 #' packages, with items as input.
 #'
-#' @param x \code{qti_manifest} object to be written, or a list of
-#' \code{qti_item} objects to be combined in an assessment package.
-#' @param file Path to file or connection to write to.
+#' @param x \code{qti_manifest} object to be written, or combined with item
+#' objects in an assessment package.
+#' @param file Path to file or connection to write to, with default
+#' \code{"imsmanifest.xml"}.
 #' @param \dots Further arguments passed to \code{xml_write}.
-#' @return When \code{file} is not provided, x is written to the console
-#' with \code{as.character}.
+#' @return When \code{file} is not provided, the manifest in x is written to the
+#' console with \code{as.character}. When building an assessment package, files are
+#' written to the current working directory.
 #' @keywords methods
 #'
 #' @export
-write_qti_manifest <- function(x, file, ...) {
+write_qti_manifest <- function(x, file = "imsmanifest.xml", ...) {
   if (class(x) == "xml_document")
     out <- x
   else if (class(x) == "qti_manifest") {
@@ -24,29 +26,17 @@ write_qti_manifest <- function(x, file, ...) {
   xml2::write_xml(out, file)
 }
 
+#' @rdname write_qti_manifest
+#' @export
 write_qti_package <- function(x, file) {
-  # Write QTI XML files for items and manifest
-  man <- qti_manifest(x) # Guarantees filenames will match
-  write_qti_manifest(man, file)
-  if (class(x) == "qti_item") x <- list(x)
-  for (i in x) {
+  if (class(x) != "qti_manifest")
+    stop("'x' must be a qti_manifest object")
+  cat("\nGenerating QTI manifest\n\n")
+  write_qti_manifest(x, file)
+  for (i in x$items) {
     cat("\nGenerating QTI for item ", i$id, "\n\n")
-    write_qti(i, file = ) # Use function for getting item names?
+    write_qti(i, file = i$href) # Use function for getting item names?
   }
-}
-
-# Function for getting item names?
-get_manifest_items <- function(x) {
-  # Extract the href for resources with type imsqti
-  nodes <- xml2::xml_find_all(x$xml, "//resource")
-  has_items <- grepl("imsqti", xml2::xml_attrs(nodes))
-  if (any(has_items)) {
-    out <- xml2::xml_attr(nodes[has_items], "href")
-  }
-  else
-    stop("Manifest 'x' does not contain resources with type imsqti")
-
-  rm(nodes)
 }
 
 get_manifest_images <- function(x, pattern = "\\.png|\\.jpg|\\.jpeg",
@@ -58,7 +48,7 @@ get_manifest_images <- function(x, pattern = "\\.png|\\.jpg|\\.jpeg",
   # to is new directory, excluding image names, ending with /
   man <- xml2::read_xml(x)
   temp_href <- xml2::xml_attr(xml2::xml_find_all(man, "//file"), "href")
-  image_names <- basename(grep(pattern, temp_href, value = T))
+  image_names <- basename(grep(pattern, temp_href, value = TRUE))
   if (!all(image_names %in% dir(from)))
     stop("Some images in manifest 'x' not found in 'from' directory")
   file_count <- file.copy(paste0(from, image_names), paste0(to, image_names),

@@ -20,7 +20,8 @@ supplied, this is created automatically from the remaining arguments.}
 \code{qti_manifest} returns an object of class
 \dQuote{\code{qti_manifest}}, which is a list containing named elements
 for the assessment \code{id} and \code{title}, as supplied via
-arguments, and the QTI XML representation of the manifest.
+arguments, the items in \code{x} as a list of \dQuote{\code{qti_item}},
+and the QTI XML representation of the manifest.
 }
 \description{
 These functions build and manipulate qti_manifest objects, for analysis

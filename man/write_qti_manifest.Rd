@@ -2,21 +2,26 @@
 % Please edit documentation in R/write_qti_manifest.R
 \name{write_qti_manifest}
 \alias{write_qti_manifest}
+\alias{write_qti_package}
 \title{Write QTI XML Manifest and Assessment Package}
 \usage{
-write_qti_manifest(x, file, ...)
+write_qti_manifest(x, file = "imsmanifest.xml", ...)
+
+write_qti_package(x, file)
 }
 \arguments{
-\item{x}{\code{qti_manifest} object to be written, or a list of
-\code{qti_item} objects to be combined in an assessment package.}
+\item{x}{\code{qti_manifest} object to be written, or combined with item
+objects in an assessment package.}
 
-\item{file}{Path to file or connection to write to.}
+\item{file}{Path to file or connection to write to, with default
+\code{"imsmanifest.xml"}.}
 
 \item{\dots}{Further arguments passed to \code{xml_write}.}
 }
 \value{
-When \code{file} is not provided, x is written to the console
-with \code{as.character}.
+When \code{file} is not provided, the manifest in x is written to the
+console with \code{as.character}. When building an assessment package, files are
+written to the current working directory.
 }
 \description{
 These functions write QTI XML manifests to files, and build assessment
